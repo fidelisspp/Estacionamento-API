@@ -67,6 +67,15 @@ No Swagger, clique em **Authorize**, cole o token e todas as requisições passa
 
 > O token expira em **20 minutos** (configuração em `JwtUtils.EXPIRE_MINUTES`). Ao receber `401`, faça login de novo.
 
+## Coleção do Postman
+
+O arquivo [`postman/Estacionamento-API.postman_collection.json`](postman/Estacionamento-API.postman_collection.json) tem todos os endpoints, organizados em pastas na ordem de um roteiro completo: usuários → autenticação → clientes → vagas → serviços → estacionamentos → exclusões.
+
+- Importe no Postman com **Import → arquivo**.
+- Os logins salvam o token sozinhos, e a coleção inteira usa `Bearer {{token}}`.
+- O cadastro de usuário, o cliente, o serviço e o check-in salvam `usuarioId`, `clienteId`, `servicoId` e `recibo`, usados pelas requisições seguintes.
+- A descrição de cada requisição diz qual perfil (ADMIN ou CLIENTE) ela exige.
+
 ## Regras de negócio
 
 **Cobrança no check-out:**

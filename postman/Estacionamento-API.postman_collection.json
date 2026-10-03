@@ -1,0 +1,1037 @@
+{
+  "info": {
+    "name": "Estacionamento-API",
+    "description": "Coleção com os 33 endpoints da API de estacionamento (Spring Boot + HATEOAS).\n\nRoteiro (na ordem das pastas):\n1. Usuários: crie a Ana e a Maria.\n2. Promova a Ana a ADMIN no console H2 (http://localhost:8080/h2-console, JDBC URL jdbc:h2:file:./data/estacionamento, usuário sa, senha em branco):\n   UPDATE USUARIOS SET ROLE = 'ROLE_ADMIN' WHERE USERNAME = 'ana@email.com';\n3. Autenticação: antes de cada requisição, faça o login do perfil indicado na descrição dela (o token é salvo sozinho em {{token}}).\n4. Clientes (criar com login CLIENTE), Vagas e Serviços (login ADMIN).\n5. Estacionamentos: check-in (salva o {{recibo}}), consultas e check-out. Compare os links HATEOAS antes e depois do check-out.\n6. Exclusões: por último, na ordem da pasta (estacionamento -> cliente -> usuário -> serviço -> vaga).\n\nO token expira em 2 minutos: ao receber 401, rode o login de novo.\nVariáveis preenchidas automaticamente: token, usuarioId, clienteId, servicoId, recibo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "usuarioId",
+      "value": ""
+    },
+    {
+      "key": "clienteId",
+      "value": ""
+    },
+    {
+      "key": "servicoId",
+      "value": ""
+    },
+    {
+      "key": "recibo",
+      "value": ""
+    },
+    {
+      "key": "vagaCodigo",
+      "value": "A-01"
+    },
+    {
+      "key": "cpf",
+      "value": "79074426050"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Usuários",
+      "item": [
+        {
+          "name": "Criar usuário - Ana (será ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Público. Cria a Ana como CLIENTE; depois promova-a a ADMIN pelo console H2 (veja a descrição da coleção). E-mail repetido -> 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ana@email.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Criar usuário - Maria (CLIENTE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Público. Cria a Maria como CLIENTE e salva o id em {{usuarioId}}. Resposta: 201 + Location + link self.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"maria@email.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    pm.collectionVariables.set(\"usuarioId\", pm.response.json().id);",
+                  "    console.log(\"usuarioId = \" + pm.collectionVariables.get(\"usuarioId\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar usuário por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "ADMIN (qualquer usuário) ou o próprio usuário. Os links mudam conforme quem consulta: update-password só aparece pro próprio usuário; delete e usuarios só pro ADMIN."
+          }
+        },
+        {
+          "name": "Alterar a própria senha",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "Só o próprio usuário (login CLIENTE da Maria). Resposta 204. No exemplo a nova senha é igual à atual pra não quebrar os logins do roteiro; troque novaSenha/confirmaSenha pra testar de verdade. Senha atual errada -> 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senhaAtual\": \"123456\",\n  \"novaSenha\": \"123456\",\n  \"confirmaSenha\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar usuários (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ADMIN. Resposta HAL: _embedded.usuarios, _links (first/prev/next/last) e page."
+          }
+        },
+        {
+          "name": "Listar usuários por perfil (consulta personalizada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/role/CLIENTE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "role",
+                "CLIENTE"
+              ]
+            },
+            "description": "ADMIN. Perfil: ADMIN ou CLIENTE. Perfil inválido -> 400."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Autenticação",
+      "item": [
+        {
+          "name": "Login ADMIN (salva o token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth"
+              ]
+            },
+            "description": "Público. Faz login como ADMIN e salva o token em {{token}}. O token expira em 2 minutos: ao receber 401, rode de novo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ana@email.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    pm.collectionVariables.set(\"token\", pm.response.json().token);",
+                  "    console.log(\"token = \" + pm.collectionVariables.get(\"token\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login CLIENTE (salva o token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth"
+              ]
+            },
+            "description": "Público. Faz login como CLIENTE (Maria) e salva o token em {{token}}. Use antes das requisições marcadas como CLIENTE.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"maria@email.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    pm.collectionVariables.set(\"token\", pm.response.json().token);",
+                  "    console.log(\"token = \" + pm.collectionVariables.get(\"token\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Clientes",
+      "item": [
+        {
+          "name": "Criar cliente (CLIENTE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "description": "CLIENTE (login da Maria). Vincula o cadastro ao usuário logado. 201 + Location apontando pra /clientes/detalhes. Salva o id em {{clienteId}}. CPF repetido -> 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria da Silva\",\n  \"cpf\": \"79074426050\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    pm.collectionVariables.set(\"clienteId\", pm.response.json().id);",
+                  "    console.log(\"clienteId = \" + pm.collectionVariables.get(\"clienteId\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalhes do cliente logado (CLIENTE)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/detalhes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "detalhes"
+              ]
+            },
+            "description": "CLIENTE. Identifica o cliente pelo token. Repare nos links: só self e estacionamentos (sem update/delete, que dariam 403)."
+          }
+        },
+        {
+          "name": "Buscar cliente por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{clienteId}}"
+              ]
+            },
+            "description": "ADMIN. Links: self, update, delete, clientes e estacionamentos (navegação para o histórico)."
+          }
+        },
+        {
+          "name": "Listar clientes (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ADMIN. Resposta HAL com _embedded.clientes."
+          }
+        },
+        {
+          "name": "Buscar cliente por CPF (consulta personalizada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/cpf/{{cpf}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "cpf",
+                "{{cpf}}"
+              ]
+            },
+            "description": "ADMIN. CPF só com números."
+          }
+        },
+        {
+          "name": "Atualizar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{clienteId}}"
+              ]
+            },
+            "description": "ADMIN. Atualização total (nome e CPF). CPF de outro cliente -> 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria da Silva Souza\",\n  \"cpf\": \"79074426050\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Vagas",
+      "item": [
+        {
+          "name": "Criar vaga",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vagas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vagas"
+              ]
+            },
+            "description": "ADMIN. 201 + Location. Código repetido -> 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{vagaCodigo}}\",\n  \"status\": \"LIVRE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Buscar vaga por código",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vagas/{{vagaCodigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vagas",
+                "{{vagaCodigo}}"
+              ]
+            },
+            "description": "ADMIN. Links: self, update, delete e vagas."
+          }
+        },
+        {
+          "name": "Listar vagas (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vagas?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vagas"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ADMIN. Resposta HAL com _embedded.vagas."
+          }
+        },
+        {
+          "name": "Listar vagas por status (consulta personalizada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vagas/status/LIVRE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vagas",
+                "status",
+                "LIVRE"
+              ]
+            },
+            "description": "ADMIN. Status: LIVRE ou OCUPADA. Status inválido -> 400."
+          }
+        },
+        {
+          "name": "Atualizar vaga",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vagas/{{vagaCodigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vagas",
+                "{{vagaCodigo}}"
+              ]
+            },
+            "description": "ADMIN. Bloqueado (409) se a vaga tem veículo estacionado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{vagaCodigo}}\",\n  \"status\": \"LIVRE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Serviços",
+      "item": [
+        {
+          "name": "Criar serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos"
+              ]
+            },
+            "description": "ADMIN. 201 + Location. Salva o id em {{servicoId}}, usado no check-in. Nome repetido -> 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Lavagem completa\",\n  \"descricao\": \"Lavagem externa e interna\",\n  \"preco\": 60,\n  \"tipo\": \"LAVAGEM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    pm.collectionVariables.set(\"servicoId\", pm.response.json().id);",
+                  "    console.log(\"servicoId = \" + pm.collectionVariables.get(\"servicoId\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar serviço por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicos/{{servicoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos",
+                "{{servicoId}}"
+              ]
+            },
+            "description": "ADMIN ou CLIENTE."
+          }
+        },
+        {
+          "name": "Listar serviços (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicos?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ADMIN ou CLIENTE. Resposta HAL com _embedded.servicos."
+          }
+        },
+        {
+          "name": "Listar serviços por tipo (consulta personalizada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicos/tipo/LAVAGEM",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos",
+                "tipo",
+                "LAVAGEM"
+              ]
+            },
+            "description": "ADMIN ou CLIENTE. Tipos: LAVAGEM, MANOBRISTA, CALIBRAGEM, OUTRO."
+          }
+        },
+        {
+          "name": "Atualizar serviço",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicos/{{servicoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos",
+                "{{servicoId}}"
+              ]
+            },
+            "description": "ADMIN. Atualização total. Nome de outro serviço -> 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Lavagem completa\",\n  \"descricao\": \"Lavagem externa, interna e aspiração\",\n  \"preco\": 70,\n  \"tipo\": \"LAVAGEM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Estacionamentos",
+      "item": [
+        {
+          "name": "Check-in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estacionamentos/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estacionamentos",
+                "check-in"
+              ]
+            },
+            "description": "ADMIN. Ocupa a primeira vaga livre e salva o recibo em {{recibo}}. Repare nos links: check-out presente, delete ausente. CPF inexistente ou sem vaga livre -> 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1234\",\n  \"marca\": \"FIAT\",\n  \"modelo\": \"PALIO 1.0\",\n  \"cor\": \"AZUL\",\n  \"clienteCpf\": \"{{cpf}}\",\n  \"servicosIds\": [{{servicoId}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    pm.collectionVariables.set(\"recibo\", pm.response.json().recibo);",
+                  "    console.log(\"recibo = \" + pm.collectionVariables.get(\"recibo\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar estacionamento por recibo (aberto ou finalizado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estacionamentos/{{recibo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estacionamentos",
+                "{{recibo}}"
+              ]
+            },
+            "description": "ADMIN ou o cliente dono do recibo. É o link self. Compare os links antes e depois do check-out."
+          }
+        },
+        {
+          "name": "Buscar check-in em aberto por recibo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estacionamentos/check-in/{{recibo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estacionamentos",
+                "check-in",
+                "{{recibo}}"
+              ]
+            },
+            "description": "ADMIN ou o cliente dono do recibo. Depois do check-out responde 404."
+          }
+        },
+        {
+          "name": "Histórico do cliente logado (CLIENTE)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estacionamentos?page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estacionamentos"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "CLIENTE (login da Maria). Os itens não trazem links de ADMIN (check-out, delete, vaga)."
+          }
+        },
+        {
+          "name": "Check-out",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estacionamentos/check-out/{{recibo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estacionamentos",
+                "check-out",
+                "{{recibo}}"
+              ]
+            },
+            "description": "ADMIN. Calcula valor (tempo + serviços) e desconto e libera a vaga. Repare nos links: agora delete presente, check-out ausente."
+          }
+        },
+        {
+          "name": "Histórico por CPF (consulta personalizada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estacionamentos/cpf/{{cpf}}?page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estacionamentos",
+                "cpf",
+                "{{cpf}}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "ADMIN. Paginado, ordenado por data de entrada."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Exclusões (rodar por último, nesta ordem)",
+      "item": [
+        {
+          "name": "Excluir estacionamento",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estacionamentos/{{recibo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estacionamentos",
+                "{{recibo}}"
+              ]
+            },
+            "description": "ADMIN. 204 se finalizado; 409 se ainda em aberto (faça o check-out antes)."
+          }
+        },
+        {
+          "name": "Excluir cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{clienteId}}"
+              ]
+            },
+            "description": "ADMIN. 204. Bloqueado (409) se o cliente tem histórico de estacionamentos (por isso o estacionamento é excluído antes). O usuário vinculado não é excluído."
+          }
+        },
+        {
+          "name": "Excluir usuário",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "ADMIN. 204. Bloqueado (409) se o usuário tem cadastro de cliente (por isso o cliente é excluído antes) ou se é o próprio ADMIN logado."
+          }
+        },
+        {
+          "name": "Excluir serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicos/{{servicoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicos",
+                "{{servicoId}}"
+              ]
+            },
+            "description": "ADMIN. 204. Bloqueado (409) se o serviço já foi usado em um estacionamento."
+          }
+        },
+        {
+          "name": "Excluir vaga",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vagas/{{vagaCodigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vagas",
+                "{{vagaCodigo}}"
+              ]
+            },
+            "description": "ADMIN. 204. Bloqueado (409) se a vaga já foi usada em um estacionamento."
+          }
+        }
+      ]
+    }
+  ]
+}
