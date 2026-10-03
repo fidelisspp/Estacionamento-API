@@ -65,7 +65,7 @@ POST /api/v1/auth
 
 No Swagger, clique em **Authorize**, cole o token e todas as requisições passam a enviá-lo.
 
-> O token expira em **2 minutos** (configuração em `JwtUtils.EXPIRE_MINUTES`). Ao receber `401`, faça login de novo.
+> O token expira em **20 minutos** (configuração em `JwtUtils.EXPIRE_MINUTES`). Ao receber `401`, faça login de novo.
 
 ## Modelo de dados
 
