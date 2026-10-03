@@ -149,7 +149,7 @@ Todas as rotas começam com `/api/v1`. As listagens são paginadas com `?page=0&
 | GET | `/estacionamentos` | Histórico do cliente logado | CLIENTE |
 | DELETE | `/estacionamentos/{recibo}` | Exclui um estacionamento finalizado | ADMIN |
 
-**Códigos de status usados:** `200` OK · `201` Created (com cabeçalho `Location`) · `204` No Content · `400` parâmetro inválido · `401` sem token ou token expirado · `403` sem permissão · `404` não encontrado · `409` conflito com regra de negócio · `422` dados de entrada inválidos.
+**Códigos de status usados:** `200` OK - `201` Created (com cabeçalho `Location`) - `204` No Content - `400` parâmetro inválido - `401` sem token ou token expirado - `403` sem permissão - `404` não encontrado - `409` conflito com regra de negócio - `422` dados de entrada inválidos.
 
 ## HATEOAS
 
