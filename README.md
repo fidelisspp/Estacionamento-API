@@ -39,7 +39,7 @@ A API sobe em `http://localhost:8080`. As tabelas são criadas automaticamente n
 
 ## Primeiros passos (autenticação)
 
-A API usa **JWT**. Só o cadastro de usuário (`POST /api/v1/usuarios`), o login (`POST /api/v1/auth`), a documentação e o console H2 são públicos; todo o resto exige o cabeçalho `Authorization: Bearer <token>`.
+A API usa **JWT**. Só o cadastro de usuário (`POST /api/v1/usuarios`), o login (`POST /api/v1/auth`), a documentação e o console H2 são públicos. Todo o resto exige o cabeçalho `Authorization: Bearer <token>`.
 
 Existem dois perfis:
 - **CLIENTE**: perfil de quem se cadastra pela API. Gerencia o próprio cadastro e consulta os próprios estacionamentos.
