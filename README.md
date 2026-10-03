@@ -67,16 +67,6 @@ No Swagger, clique em **Authorize**, cole o token e todas as requisições passa
 
 > O token expira em **20 minutos** (configuração em `JwtUtils.EXPIRE_MINUTES`). Ao receber `401`, faça login de novo.
 
-| Entidade | Tabela | Descrição |
-|---|---|---|
-| `Usuario` | `usuarios` | Conta de acesso (login, senha e perfil). |
-| `Cliente` | `clientes` | Dados pessoais (nome e CPF), ligados a um usuário. |
-| `Vaga` | `vagas` | Vaga física do estacionamento. |
-| `ClienteVaga` | `clientes_tem_vagas` | Um estacionamento: o veículo de um cliente numa vaga, do check-in ao check-out. |
-| `Servico` | `servicos` | Serviço extra que pode ser contratado no check-in. |
-
-Todas as entidades usam **Bean Validation** (`@NotBlank`, `@Size`, `@CPF`, `@Positive`...) e têm campos de **auditoria** (data e autor da criação e da última alteração), preenchidos automaticamente.
-
 ## Regras de negócio
 
 **Cobrança no check-out:**
