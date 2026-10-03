@@ -67,55 +67,6 @@ No Swagger, clique em **Authorize**, cole o token e todas as requisições passa
 
 > O token expira em **20 minutos** (configuração em `JwtUtils.EXPIRE_MINUTES`). Ao receber `401`, faça login de novo.
 
-## Modelo de dados
-
-```mermaid
-erDiagram
-    USUARIOS ||--o| CLIENTES : "1:1 (@OneToOne)"
-    CLIENTES ||--o{ CLIENTES_TEM_VAGAS : "1:N (@OneToMany / @ManyToOne)"
-    VAGAS ||--o{ CLIENTES_TEM_VAGAS : "1:N (@ManyToOne)"
-    CLIENTES_TEM_VAGAS }o--o{ SERVICOS : "N:N (@ManyToMany)"
-
-    USUARIOS {
-        bigint id PK
-        string username "e-mail, único"
-        string password "hash BCrypt"
-        enum role "ROLE_ADMIN | ROLE_CLIENTE"
-    }
-    CLIENTES {
-        bigint id PK
-        string nome
-        string cpf "único"
-        bigint id_usuario FK
-    }
-    VAGAS {
-        bigint id PK
-        string codigo "único, ex.: A-01"
-        enum status "LIVRE | OCUPADA"
-    }
-    CLIENTES_TEM_VAGAS {
-        bigint id PK
-        string numero_recibo "único"
-        string placa
-        string marca
-        string modelo
-        string cor
-        datetime data_entrada
-        datetime data_saida "nula enquanto estacionado"
-        decimal valor
-        decimal desconto
-        bigint id_cliente FK
-        bigint id_vaga FK
-    }
-    SERVICOS {
-        bigint id PK
-        string nome "único"
-        string descricao
-        decimal preco
-        enum tipo "LAVAGEM | MANOBRISTA | CALIBRAGEM | OUTRO"
-    }
-```
-
 | Entidade | Tabela | Descrição |
 |---|---|---|
 | `Usuario` | `usuarios` | Conta de acesso (login, senha e perfil). |
