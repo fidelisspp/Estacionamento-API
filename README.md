@@ -1,6 +1,6 @@
 # Estacionamento-API
 
-API REST para gestão de um estacionamento de veículos: cadastro de usuários e clientes, controle de vagas, serviços extras (lavagem, manobrista...) e registro de entrada (check-in) e saída (check-out) dos veículos, com cálculo automático do valor a pagar.
+API REST para gestão de um estacionamento de veículos: cadastro de usuários e clientes, controle de vagas, serviços extras, registro de entrada (check-in) e saída (check-out) dos veículos, com cálculo automático do valor a pagar.
 
 Projeto final da disciplina, desenvolvido com Spring Boot seguindo os requisitos técnicos da Parte 1: entidades relacionadas, CRUD completo, paginação, consultas personalizadas, documentação OpenAPI e HATEOAS.
 
