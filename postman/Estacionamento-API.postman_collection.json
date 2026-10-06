@@ -71,7 +71,7 @@
                 "usuarios"
               ]
             },
-            "description": "Público. Cria a Ana como CLIENTE; depois promova-a a ADMIN pelo console H2 (veja a descrição da coleção). E-mail repetido -> 409.",
+            "description": "Público. Cria a Ana como CLIENTE e depois promova-a a ADMIN pelo console H2. E-mail repetido -> 409.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"ana@email.com\",\n  \"password\": \"123456\"\n}",
@@ -105,7 +105,7 @@
                 "usuarios"
               ]
             },
-            "description": "Público. Cria a Maria como CLIENTE e salva o id em {{usuarioId}}. Resposta: 201 + Location + link self.",
+            "description": "Público. Cria a Maria como CLIENTE e salva o id em {{usuarioId}}. Resposta: 201",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"maria@email.com\",\n  \"password\": \"123456\"\n}",
@@ -149,7 +149,7 @@
                 "{{usuarioId}}"
               ]
             },
-            "description": "ADMIN (qualquer usuário) ou o próprio usuário. Os links mudam conforme quem consulta: update-password só aparece pro próprio usuário; delete e usuarios só pro ADMIN."
+            "description": "ADMIN (qualquer usuário) ou o próprio usuário. Os links mudam conforme quem consulta: update-password só aparece pro próprio usuário e delete de usuarios só pro ADMIN."
           }
         },
         {
@@ -172,7 +172,7 @@
                 "{{usuarioId}}"
               ]
             },
-            "description": "Só o próprio usuário (login CLIENTE da Maria). Resposta 204. No exemplo a nova senha é igual à atual pra não quebrar os logins do roteiro; troque novaSenha/confirmaSenha pra testar de verdade. Senha atual errada -> 400.",
+            "description": "Só o próprio usuário (login CLIENTE da Maria). Resposta 204. Senha atual errada -> 400.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"senhaAtual\": \"123456\",\n  \"novaSenha\": \"123456\",\n  \"confirmaSenha\": \"123456\"\n}",
@@ -254,7 +254,7 @@
                 "auth"
               ]
             },
-            "description": "Público. Faz login como ADMIN e salva o token em {{token}}. O token expira em 2 minutos: ao receber 401, rode de novo.",
+            "description": "Público. Faz login como ADMIN e salva o token em {{token}}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"ana@email.com\",\n  \"password\": \"123456\"\n}",
@@ -302,7 +302,7 @@
                 "auth"
               ]
             },
-            "description": "Público. Faz login como CLIENTE (Maria) e salva o token em {{token}}. Use antes das requisições marcadas como CLIENTE.",
+            "description": "Público. Faz login como CLIENTE (Maria) e salva o token em {{token}}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"maria@email.com\",\n  \"password\": \"123456\"\n}",
@@ -396,7 +396,7 @@
                 "detalhes"
               ]
             },
-            "description": "CLIENTE. Identifica o cliente pelo token. Repare nos links: só self e estacionamentos (sem update/delete, que dariam 403)."
+            "description": "CLIENTE. Identifica o cliente pelo token."
           }
         },
         {
@@ -414,7 +414,7 @@
                 "{{clienteId}}"
               ]
             },
-            "description": "ADMIN. Links: self, update, delete, clientes e estacionamentos (navegação para o histórico)."
+            "description": "ADMIN.."
           }
         },
         {
@@ -798,7 +798,7 @@
                 "check-in"
               ]
             },
-            "description": "ADMIN. Ocupa a primeira vaga livre e salva o recibo em {{recibo}}. Repare nos links: check-out presente, delete ausente. CPF inexistente ou sem vaga livre -> 404.",
+            "description": "ADMIN. Ocupa a primeira vaga livre e salva o recibo em {{recibo}}.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"placa\": \"ABC-1234\",\n  \"marca\": \"FIAT\",\n  \"modelo\": \"PALIO 1.0\",\n  \"cor\": \"AZUL\",\n  \"clienteCpf\": \"{{cpf}}\",\n  \"servicosIds\": [{{servicoId}}]\n}",
@@ -839,7 +839,7 @@
                 "{{recibo}}"
               ]
             },
-            "description": "ADMIN ou o cliente dono do recibo. É o link self. Compare os links antes e depois do check-out."
+            "description": "ADMIN ou o cliente dono do recibo."
           }
         },
         {
@@ -858,7 +858,7 @@
                 "{{recibo}}"
               ]
             },
-            "description": "ADMIN ou o cliente dono do recibo. Depois do check-out responde 404."
+            "description": "ADMIN ou o cliente dono do recibo."
           }
         },
         {
@@ -885,7 +885,7 @@
                 }
               ]
             },
-            "description": "CLIENTE (login da Maria). Os itens não trazem links de ADMIN (check-out, delete, vaga)."
+            "description": "CLIENTE"
           }
         },
         {
@@ -904,7 +904,7 @@
                 "{{recibo}}"
               ]
             },
-            "description": "ADMIN. Calcula valor (tempo + serviços) e desconto e libera a vaga. Repare nos links: agora delete presente, check-out ausente."
+            "description": "ADMIN. Calcula valor (tempo + serviços) e desconto e libera a vaga."
           }
         },
         {
@@ -974,7 +974,7 @@
                 "{{clienteId}}"
               ]
             },
-            "description": "ADMIN. 204. Bloqueado (409) se o cliente tem histórico de estacionamentos (por isso o estacionamento é excluído antes). O usuário vinculado não é excluído."
+            "description": "ADMIN. 204. Bloqueado (409) se o cliente tem histórico de estacionamentos. O usuário vinculado não é excluído."
           }
         },
         {

@@ -32,8 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-### H2 (banco em arquivo) ###
-data/
+### H2 (log de erros do banco) ###
+*.trace.db
 
 ### Material de apoio (fora do entregável) ###
 Claude outputs/
