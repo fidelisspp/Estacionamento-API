@@ -16,6 +16,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("select u.role from Usuario u where u.username = :username")
     Usuario.Role findRoleByUsername(String username);
 
+    boolean existsByRole(Usuario.Role role);
+
     Page<Usuario> findAllByRole(Usuario.Role role, Pageable pageable);
 
     @Query("select count(c) > 0 from Cliente c where c.usuario.id = :id")

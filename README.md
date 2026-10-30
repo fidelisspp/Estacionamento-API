@@ -23,10 +23,31 @@ Projeto final da disciplina, desenvolvido com Spring Boot seguindo os requisitos
 
 **Pré-requisito:** JDK 17 ou superior. Não é preciso instalar o Maven, porque o projeto usa o Maven Wrapper.
 
+A aplicação precisa de três variáveis de ambiente:
+
+| Variável | Para quê |
+|---|---|
+| `JWT_SECRET` | Segredo que assina os tokens JWT. Mínimo de 32 caracteres. |
+| `ADMIN_USERNAME` | E-mail do administrador inicial. |
+| `ADMIN_PASSWORD` | Senha do administrador inicial, com exatamente 6 caracteres (mesma regra do login). |
+
+Se não existir nenhum ADMIN no banco, a aplicação cria um com `ADMIN_USERNAME` e `ADMIN_PASSWORD` ao subir. Depois que já existe um ADMIN, essas duas variáveis deixam de ser lidas. A aplicação não sobe sem `JWT_SECRET`, nem quando falta ADMIN e as credenciais dele não foram informadas.
+
 ```bash
 git clone https://github.com/fidelisspp/Estacionamento-API.git
 cd Estacionamento-API
-./mvnw spring-boot:run        # no Windows (cmd/PowerShell): mvnw.cmd spring-boot:run
+export JWT_SECRET="troque-por-um-segredo-longo-e-aleatorio"
+export ADMIN_USERNAME="admin@email.com"
+export ADMIN_PASSWORD="Adm#26"
+./mvnw spring-boot:run
+```
+
+No Windows (PowerShell):
+```powershell
+$env:JWT_SECRET = "troque-por-um-segredo-longo-e-aleatorio"
+$env:ADMIN_USERNAME = "admin@email.com"
+$env:ADMIN_PASSWORD = "Adm#26"
+.\mvnw.cmd spring-boot:run
 ```
 
 A API sobe em `http://localhost:8080`. As tabelas são criadas automaticamente na primeira execução.
@@ -35,11 +56,12 @@ A API sobe em `http://localhost:8080`. As tabelas são criadas automaticamente n
 |---|---|
 | Swagger UI (documentação interativa) | http://localhost:8080/docs-park.html |
 | Especificação OpenAPI (JSON) | http://localhost:8080/docs-park |
-| Console do H2 | http://localhost:8080/h2-console — JDBC URL `jdbc:h2:file:./data/estacionamento`, usuário `sa`, senha em branco |
+
+O console web do H2 fica desativado.
 
 ## Primeiros passos (autenticação)
 
-A API usa **JWT**. Só o cadastro de usuário (`POST /api/v1/usuarios`), o login (`POST /api/v1/auth`), a documentação e o console H2 são públicos. Todo o resto exige o cabeçalho `Authorization: Bearer <token>`.
+A API usa **JWT**. Só o cadastro de usuário (`POST /api/v1/usuarios`), o login (`POST /api/v1/auth`) e a documentação são públicos. Todo o resto exige o cabeçalho `Authorization: Bearer <token>`.
 
 Existem dois perfis:
 - **CLIENTE**: perfil de quem se cadastra pela API. Gerencia o próprio cadastro e consulta os próprios estacionamentos.
@@ -51,10 +73,7 @@ POST /api/v1/usuarios
 { "username": "ana@email.com", "password": "123456" }
 ```
 
-**2. Promover a ADMIN (primeira vez).** Não existe usuário administrador pré-cadastrado. No console do H2, execute:
-```sql
-UPDATE USUARIOS SET ROLE = 'ROLE_ADMIN' WHERE USERNAME = 'ana@email.com';
-```
+**2. Acesso como ADMIN.** O administrador inicial é criado ao subir a aplicação, com `ADMIN_USERNAME` e `ADMIN_PASSWORD` (veja [Como executar](#como-executar)). Faça login com essas credenciais para usar os recursos de ADMIN.
 
 **3. Fazer login e copiar o token:**
 ```http

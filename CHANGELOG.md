@@ -72,3 +72,15 @@ Primeira versão estável da API, entregue como Parte 1 do Projeto Final.
 - Respostas no formato HAL com links HATEOAS de navegação e das ações disponíveis para o perfil de quem consulta.
 - Respostas de erro padronizadas em JSON (path, método, status, mensagem e erros por campo).
 - Documentação interativa OpenAPI/Swagger em `/docs-park.html`.
+
+## [Unreleased] - 2026-10-30
+
+### Added
+
+- Política de CORS global para `/api/**`, com origens configuráveis pela property `cors.allowed-origins` (padrão: localhost nas portas 3000, 4200 e 5173).
+- Criação automática do ADMIN inicial ao subir a aplicação, quando não existe nenhum, com as variáveis de ambiente `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
+
+### Security
+
+- O segredo do JWT saiu do código e passou a ser lido da variável de ambiente `JWT_SECRET` (mínimo 32 caracteres). A aplicação não sobe sem ele.
+- O console web do H2 (`/h2-console`) foi desativado e deixou de ser público.

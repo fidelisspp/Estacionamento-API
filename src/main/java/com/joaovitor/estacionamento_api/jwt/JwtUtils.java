@@ -17,16 +17,28 @@ public class JwtUtils {
 
     public static final String JWT_BEARER = "Bearer ";
     public static final String JWT_AUTHORIZATION = "Authorization";
-    public static final String SECRET_KEY = "0123456789-0123456789-0123456789";
     public static final long EXPIRE_DAYS = 0;
     public static final long EXPIRE_HOURS = 0;
     public static final long EXPIRE_MINUTES = 20;
 
+    private static SecretKey secretKey;
+
     private JwtUtils() {
     }
 
+    static void configureSecretKey(String secret) {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                    "Segredo do JWT ausente ou curto demais: defina a variável de ambiente JWT_SECRET com pelo menos 32 caracteres");
+        }
+        secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
     private static SecretKey generateKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+        if (secretKey == null) {
+            throw new IllegalStateException("Segredo do JWT não configurado");
+        }
+        return secretKey;
     }
 
     private static Date toExpireDate(Date start) {

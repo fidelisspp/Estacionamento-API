@@ -1,5 +1,5 @@
 # ---------- Build stage ----------
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Copy build descriptors first for better cache
@@ -14,7 +14,7 @@ RUN mvn -DskipTests clean package
 
 
 # ---------- Runtime stage ----------
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
