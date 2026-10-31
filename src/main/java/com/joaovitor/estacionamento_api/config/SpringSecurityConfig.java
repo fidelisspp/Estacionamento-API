@@ -1,7 +1,9 @@
 package com.joaovitor.estacionamento_api.config;
 
+import com.joaovitor.estacionamento_api.apikey.ApiKeyFilter;
 import com.joaovitor.estacionamento_api.jwt.JwtAuthenticationEntryPoint;
 import com.joaovitor.estacionamento_api.jwt.JwtAuthorizationFilter;
+import com.joaovitor.estacionamento_api.service.ApiKeyService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,7 +31,7 @@ public class SpringSecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ApiKeyFilter apiKeyFilter) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
@@ -48,6 +50,9 @@ public class SpringSecurityConfig {
                 ).addFilterBefore(
                         jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class
 
+                ).addFilterBefore(
+                        apiKeyFilter, JwtAuthorizationFilter.class
+
                 ).exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
                 .build();
@@ -56,6 +61,11 @@ public class SpringSecurityConfig {
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
         return new JwtAuthorizationFilter();
+    }
+
+    @Bean
+    public ApiKeyFilter apiKeyFilter(ApiKeyService apiKeyService) {
+        return new ApiKeyFilter(apiKeyService);
     }
 
     @Bean
