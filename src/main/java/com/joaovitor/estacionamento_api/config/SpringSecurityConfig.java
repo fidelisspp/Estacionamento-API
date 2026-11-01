@@ -41,6 +41,7 @@ public class SpringSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/planos").permitAll()
                         .requestMatchers(DOCUMENTATION_OPENAPI).permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
