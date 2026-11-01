@@ -24,6 +24,10 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 
 ## [Unreleased]
 
+### Added
+
+- Esquema de segurança `apiKey` (header `X-API-Key`) na documentação Swagger, exigido em todas as rotas `/api/**`, e resposta `401` documentada nessas rotas.
+
 ## [1.1.0] - 2026-10-30
 
 ### Added
