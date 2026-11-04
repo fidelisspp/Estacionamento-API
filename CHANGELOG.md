@@ -27,6 +27,7 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 ### Added
 
 - Esquema de segurança `apiKey` (header `X-API-Key`) na documentação Swagger, exigido em todas as rotas `/api/**`, e resposta `401` documentada nessas rotas.
+- Rate limiting por chave de API com o algoritmo token bucket (Bucket4j), conforme o plano: FREE 10, BASIC 60 e PRO 150 requisições por minuto. Toda resposta traz `X-Rate-Limit-Limit` e `X-Rate-Limit-Remaining`. Ao exceder o limite, a API responde `429 Too Many Requests` com o header `Retry-After` e o tempo de espera na mensagem.
 
 ## [1.1.0] - 2026-10-30
 

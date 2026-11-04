@@ -1,6 +1,8 @@
 package com.joaovitor.estacionamento_api.config;
 
 import com.joaovitor.estacionamento_api.apikey.ApiKeyFilter;
+import com.joaovitor.estacionamento_api.apikey.RateLimitFilter;
+import com.joaovitor.estacionamento_api.apikey.RateLimitService;
 import com.joaovitor.estacionamento_api.jwt.JwtAuthenticationEntryPoint;
 import com.joaovitor.estacionamento_api.jwt.JwtAuthorizationFilter;
 import com.joaovitor.estacionamento_api.service.ApiKeyService;
@@ -31,7 +33,8 @@ public class SpringSecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, ApiKeyFilter apiKeyFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ApiKeyFilter apiKeyFilter,
+                                           RateLimitFilter rateLimitFilter) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
@@ -54,6 +57,9 @@ public class SpringSecurityConfig {
                 ).addFilterBefore(
                         apiKeyFilter, JwtAuthorizationFilter.class
 
+                ).addFilterAfter(
+                        rateLimitFilter, ApiKeyFilter.class
+
                 ).exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
                 .build();
@@ -67,6 +73,11 @@ public class SpringSecurityConfig {
     @Bean
     public ApiKeyFilter apiKeyFilter(ApiKeyService apiKeyService) {
         return new ApiKeyFilter(apiKeyService);
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter(RateLimitService rateLimitService) {
+        return new RateLimitFilter(rateLimitService);
     }
 
     @Bean
