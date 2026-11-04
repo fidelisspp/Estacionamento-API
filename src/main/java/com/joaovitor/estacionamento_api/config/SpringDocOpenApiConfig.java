@@ -4,8 +4,10 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.headers.Header;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -60,6 +62,20 @@ public class SpringDocOpenApiConfig {
                     }
                     operacao.getResponses().computeIfAbsent("401", codigo -> new ApiResponse()
                             .description("Chave de API ausente, inválida ou inativa, ou Bearer Token ausente/inválido")
+                            .content(new Content().addMediaType("application/json",
+                                    new MediaType().schema(new Schema<>().$ref("#/components/schemas/ErrorMessage")))));
+                    operacao.getResponses().computeIfAbsent("429", codigo -> new ApiResponse()
+                            .description("Limite de requisições do plano excedido (FREE 10, BASIC 60, PRO 150 por minuto). " +
+                                    "Aguarde o tempo informado no header Retry-After")
+                            .addHeaderObject("Retry-After", new Header()
+                                    .description("Segundos até a próxima requisição ser aceita")
+                                    .schema(new IntegerSchema()))
+                            .addHeaderObject("X-Rate-Limit-Limit", new Header()
+                                    .description("Limite de requisições por minuto do plano da chave")
+                                    .schema(new IntegerSchema()))
+                            .addHeaderObject("X-Rate-Limit-Remaining", new Header()
+                                    .description("Requisições restantes no momento (0 quando o limite é excedido)")
+                                    .schema(new IntegerSchema()))
                             .content(new Content().addMediaType("application/json",
                                     new MediaType().schema(new Schema<>().$ref("#/components/schemas/ErrorMessage")))));
                 });
