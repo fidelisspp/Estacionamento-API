@@ -28,7 +28,8 @@ public class CorsConfig {
                 HttpHeaders.CONTENT_TYPE,
                 HttpHeaders.ACCEPT,
                 ApiKeyFilter.HEADER_API_KEY,
-                IdempotenciaFilter.HEADER_IDEMPOTENCIA));
+                IdempotenciaFilter.HEADER_IDEMPOTENCIA,
+                "X-API-Version"));
         config.setExposedHeaders(List.of(
                 HttpHeaders.LOCATION,
                 IdempotenciaFilter.HEADER_REPETIDA));
