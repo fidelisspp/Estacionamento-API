@@ -2,7 +2,21 @@
 
 API REST para gestão de um estacionamento de veículos: cadastro de usuários e clientes, controle de vagas, serviços extras, registro de entrada (check-in) e saída (check-out) dos veículos, com cálculo automático do valor a pagar.
 
-Projeto final da disciplina, desenvolvido com Spring Boot seguindo os requisitos técnicos da Parte 1: entidades relacionadas, CRUD completo, paginação, consultas personalizadas, documentação OpenAPI e HATEOAS.
+Projeto final da disciplina, desenvolvido com Spring Boot.
+
+- **Parte 1:** entidades relacionadas, CRUD completo, paginação, consultas personalizadas, documentação OpenAPI e HATEOAS.
+- **Parte 2 (versão 2.0.0):** chave de API obrigatória por aplicativo, planos com rate limiting, idempotência em requisições `POST` e versionamento de API por header.
+
+**Versão atual:** 2.0.0. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md).
+
+## API em produção (Render)
+
+| Recurso | Endereço |
+|---|---|
+| Swagger UI | https://estacionamento-api-6yn3.onrender.com/docs-park.html |
+| Base da API | https://estacionamento-api-6yn3.onrender.com/api/v1 |
+
+Todas as rotas `/api/**` exigem o header `X-API-Key` (veja [Headers](#headers)). A chave de produção não fica no repositório. Ela é entregue à parte, junto com o projeto.
 
 ## Tecnologias
 
@@ -15,6 +29,7 @@ Projeto final da disciplina, desenvolvido com Spring Boot seguindo os requisitos
 | Spring HATEOAS | Links hipermídia nas respostas (formato HAL) |
 | Springdoc OpenAPI 3 / Swagger UI | Documentação interativa |
 | JJWT 0.13 | Autenticação por token JWT |
+| Bucket4j | Rate limiting por plano (token bucket) |
 | ModelMapper + Lombok | Conversão entidade ↔ DTO e redução de código repetitivo |
 | JUnit 5 + RestTestClient | Testes de integração ponta a ponta |
 | Maven (wrapper incluso) | Build e dependências |
@@ -23,15 +38,18 @@ Projeto final da disciplina, desenvolvido com Spring Boot seguindo os requisitos
 
 **Pré-requisito:** JDK 17 ou superior. Não é preciso instalar o Maven, porque o projeto usa o Maven Wrapper.
 
-A aplicação precisa de três variáveis de ambiente:
+A aplicação precisa de quatro variáveis de ambiente:
 
 | Variável | Para quê |
 |---|---|
 | `JWT_SECRET` | Segredo que assina os tokens JWT. Mínimo de 32 caracteres. |
 | `ADMIN_USERNAME` | E-mail do administrador inicial. |
 | `ADMIN_PASSWORD` | Senha do administrador inicial, com exatamente 6 caracteres (mesma regra do login). |
+| `API_KEY_INICIAL` | Chave de API inicial, criada com o plano PRO. Sugestão: um UUID. É o valor que vai no header `X-API-Key`. |
 
-Se não existir nenhum ADMIN no banco, a aplicação cria um com `ADMIN_USERNAME` e `ADMIN_PASSWORD` ao subir. Depois que já existe um ADMIN, essas duas variáveis deixam de ser lidas. A aplicação não sobe sem `JWT_SECRET`, nem quando falta ADMIN e as credenciais dele não foram informadas.
+Se não existir nenhum ADMIN no banco, a aplicação cria um com `ADMIN_USERNAME` e `ADMIN_PASSWORD` ao subir. Depois que já existe um ADMIN, essas duas variáveis deixam de ser lidas. Do mesmo jeito, se não existir nenhuma chave de API, a aplicação cria uma com `API_KEY_INICIAL`. Depois disso, a variável deixa de ser lida.
+
+> **A aplicação falha de propósito ao subir** quando falta `JWT_SECRET`, quando não há ADMIN e as credenciais dele não foram informadas, ou quando não há chave de API e `API_KEY_INICIAL` não foi informada. A mensagem de erro no console diz qual variável falta.
 
 ```bash
 git clone https://github.com/fidelisspp/Estacionamento-API.git
@@ -39,6 +57,7 @@ cd Estacionamento-API
 export JWT_SECRET="troque-por-um-segredo-longo-e-aleatorio"
 export ADMIN_USERNAME="admin@email.com"
 export ADMIN_PASSWORD="Adm#26"
+export API_KEY_INICIAL="3f2b8c1e-4a5d-4e6f-9a7b-1c2d3e4f5a6b"
 ./mvnw spring-boot:run
 ```
 
@@ -47,6 +66,7 @@ No Windows (PowerShell):
 $env:JWT_SECRET = "troque-por-um-segredo-longo-e-aleatorio"
 $env:ADMIN_USERNAME = "admin@email.com"
 $env:ADMIN_PASSWORD = "Adm#26"
+$env:API_KEY_INICIAL = "3f2b8c1e-4a5d-4e6f-9a7b-1c2d3e4f5a6b"
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -61,7 +81,10 @@ O console web do H2 fica desativado.
 
 ## Primeiros passos (autenticação)
 
-A API usa **JWT**. Só o cadastro de usuário (`POST /api/v1/usuarios`), o login (`POST /api/v1/auth`) e a documentação são públicos. Todo o resto exige o cabeçalho `Authorization: Bearer <token>`.
+A API tem duas camadas de acesso:
+
+1. **Chave de API (`X-API-Key`)**: identifica o aplicativo. É exigida em **todas** as rotas `/api/**`, inclusive o cadastro e o login.
+2. **JWT (`Authorization: Bearer <token>`)**: identifica o usuário. Só o cadastro de usuário (`POST /api/v1/usuarios`), o login (`POST /api/v1/auth`), a tabela de planos (`GET /api/v1/planos`) e a documentação dispensam o token.
 
 Existem dois perfis:
 - **CLIENTE**: perfil de quem se cadastra pela API. Gerencia o próprio cadastro e consulta os próprios estacionamentos.
@@ -82,15 +105,75 @@ POST /api/v1/auth
 → { "token": "eyJhbGciOiJIUzI1NiJ9..." }
 ```
 
-No Swagger, clique em **Authorize**, cole o token e todas as requisições passam a enviá-lo.
+No Swagger, clique em **Authorize**, preencha o `apiKey` com a chave de API e o `security` com o token. A partir daí, todas as requisições enviam os dois.
 
 > O token expira em **20 minutos** (configuração em `JwtUtils.EXPIRE_MINUTES`). Ao receber `401`, faça login de novo.
 
+## Headers
+
+| Header | Onde | Para quê |
+|---|---|---|
+| `X-API-Key` | Todas as rotas `/api/**` | Chave do aplicativo. Ausente, inválida ou desativada: `401`. |
+| `Authorization: Bearer <token>` | Rotas protegidas | Token JWT do usuário, obtido no login. Válido por 20 minutos. |
+| `X-Idempotency-Key` | Todo `POST` em `/api/**`, exceto `POST /api/v1/auth` | UUID único por operação. Detalhes em [Idempotência](#idempotência). |
+| `X-API-Version` | Opcional, em qualquer rota | Versão do recurso: `1` (padrão) ou `2`. Detalhes em [Versionamento](#versionamento). |
+
+**Headers de resposta:**
+
+| Header | Quando aparece |
+|---|---|
+| `X-Rate-Limit-Limit` | Em toda resposta de `/api/**`: limite de requisições por minuto do plano da chave. |
+| `X-Rate-Limit-Remaining` | Em toda resposta de `/api/**`: requisições que ainda restam no minuto. |
+| `Retry-After` | No `429`: segundos até a próxima requisição ser aceita. |
+| `X-Idempotency-Replayed: true` | Quando a resposta foi devolvida da idempotência, sem processar de novo. |
+| `Location` | No `201`: endereço do recurso criado. |
+
+## Planos e rate limiting
+
+Cada chave de API tem um plano, que define quantas requisições ela pode fazer por minuto (algoritmo token bucket):
+
+| Plano | Requisições por minuto | Preço mensal | Para quem |
+|---|---|---|---|
+| FREE | 10 | R$ 0,00 | Testes e desenvolvimento |
+| BASIC | 60 | R$ 60,00 | Estacionamento pequeno, com uma unidade |
+| PRO | 150 | R$ 150,00 | Redes com várias unidades e integrações |
+
+Ao passar do limite, a API responde `429 Too Many Requests`, com o header `Retry-After`. A chave inicial (`API_KEY_INICIAL`) nasce com o plano PRO. O ADMIN pode gerar novas chaves, trocar o plano e desativar chaves em `/api/v1/api-keys`.
+
+## Idempotência
+
+Todo `POST` em `/api/**` (exceto o login) exige o header `X-Idempotency-Key` com um UUID. Ele protege contra cliques duplos e reenvios por falha de rede: o mesmo check-in não é registrado duas vezes.
+
+| Situação | Resposta |
+|---|---|
+| Header ausente ou que não é um UUID | `400` |
+| Chave nova | Processa normalmente e guarda a resposta de sucesso |
+| Mesma chave, mesmo endpoint, mesmo corpo e mesmo usuário | Devolve a resposta original, com `X-Idempotency-Replayed: true`, sem processar de novo |
+| Mesma chave com outro endpoint, corpo ou usuário | `422` |
+| Mesma chave com a primeira requisição ainda em processamento | `409` |
+
+As chaves valem por **24 horas** e são separadas por chave de API. Respostas de erro não ficam guardadas: depois de um erro, dá para reenviar com a mesma chave.
+
+## Versionamento
+
+A versão é escolhida pelo header `X-API-Version`. Sem o header, vale a versão `1`, então nada que já existia quebra. Versão não suportada (ex.: `3`) responde `400`.
+
+Hoje só `GET /api/v1/planos` tem duas versões. As outras rotas respondem igual em qualquer versão suportada.
+
+```http
+GET /api/v1/planos                      → v1: { "nome", "limitePorMinuto", "precoMensal", "descricao" }
+GET /api/v1/planos  X-API-Version: 2    → v2: { "nome", "descricao", "limites": { "porMinuto", "porHora" },
+                                                 "preco": { "valor", "moeda", "formatado": "R$ 60,00" } }
+```
+
 ## Coleção do Postman
 
-O arquivo [`postman/Estacionamento-API.postman_collection.json`](postman/Estacionamento-API.postman_collection.json) tem todos os endpoints, organizados em pastas na ordem de um roteiro completo: usuários → autenticação → clientes → vagas → serviços → estacionamentos → exclusões.
+O arquivo [`postman/Estacionamento-API.postman_collection.json`](postman/Estacionamento-API.postman_collection.json) tem todos os endpoints, organizados em pastas na ordem de um roteiro completo: usuários → autenticação → clientes → vagas → serviços → estacionamentos → exclusões → planos e chaves de API → idempotência.
 
 - Importe no Postman com **Import → arquivo**.
+- Preencha a variável `apiKey` da coleção com a sua chave de API. Um script da coleção envia o header `X-API-Key` em todas as requisições.
+- Todo `POST` sem `X-Idempotency-Key` recebe um UUID novo automaticamente. A pasta **9. Idempotência** usa uma chave fixa: envie duas vezes para ver o `X-Idempotency-Replayed: true` na segunda.
+- Para usar a API do Render, troque a variável `baseUrl` para `https://estacionamento-api-6yn3.onrender.com/api/v1`.
 - Os logins salvam o token sozinhos, e a coleção inteira usa `Bearer {{token}}`.
 - O cadastro de usuário, o cliente, o serviço e o check-in salvam `usuarioId`, `clienteId`, `servicoId` e `recibo`, usados pelas requisições seguintes.
 - A descrição de cada requisição diz qual perfil (ADMIN ou CLIENTE) ela exige.
@@ -177,7 +260,21 @@ Todas as rotas começam com `/api/v1`. As listagens são paginadas com `?page=0&
 | GET | `/estacionamentos` | Histórico do cliente logado | CLIENTE |
 | DELETE | `/estacionamentos/{recibo}` | Exclui um estacionamento finalizado | ADMIN |
 
-**Códigos de status usados:** `200` OK - `201` Created (com cabeçalho `Location`) - `204` No Content - `400` parâmetro inválido - `401` sem token ou token expirado - `403` sem permissão - `404` não encontrado - `409` conflito com regra de negócio - `422` dados de entrada inválidos.
+### Planos — `/planos`
+| Método | Rota | Descrição | Acesso |
+|---|---|---|---|
+| GET | `/planos` | Tabela de planos. Versões 1 e 2 pelo header `X-API-Version` | Só `X-API-Key` |
+
+### Chaves de API — `/api-keys`
+| Método | Rota | Descrição | Acesso |
+|---|---|---|---|
+| POST | `/api-keys` | Gera uma chave para um aplicativo, com o plano escolhido | ADMIN |
+| GET | `/api-keys/{id}` | Busca uma chave | ADMIN |
+| GET | `/api-keys` | Lista as chaves (paginado) | ADMIN |
+| PATCH | `/api-keys/{id}/plano` | Troca o plano de uma chave | ADMIN |
+| PATCH | `/api-keys/{id}/desativar` | Desativa uma chave (a última ativa não pode ser desativada) | ADMIN |
+
+**Códigos de status usados:** `200` OK - `201` Created (com cabeçalho `Location`) - `204` No Content - `400` parâmetro inválido, `X-Idempotency-Key` ausente ou versão não suportada - `401` sem chave de API, chave inválida, sem token ou token expirado - `403` sem permissão - `404` não encontrado - `409` conflito com regra de negócio - `422` dados de entrada inválidos ou `X-Idempotency-Key` reutilizada - `429` limite do plano excedido.
 
 ## HATEOAS
 
@@ -219,9 +316,11 @@ O projeto tem **107 testes de integração** que sobem a aplicação e fazem req
 
 ```
 src/main/java/com/joaovitor/estacionamento_api
-├── config/            Segurança (Spring Security), OpenAPI e fuso horário
+├── apikey/            Filtro da chave de API e rate limiting
+├── config/            Segurança (Spring Security), CORS, OpenAPI e fuso horário
 ├── entity/            Entidades JPA
 ├── exception/         Exceções de regra de negócio
+├── idempotencia/      Filtro de idempotência dos POSTs
 ├── jwt/               Geração e validação do token JWT
 ├── repository/        Repositórios Spring Data (+ projections)
 ├── service/           Regras de negócio
