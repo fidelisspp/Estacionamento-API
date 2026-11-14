@@ -7,7 +7,7 @@ Projeto final da disciplina, desenvolvido com Spring Boot.
 - **Parte 1:** entidades relacionadas, CRUD completo, paginação, consultas personalizadas, documentação OpenAPI e HATEOAS.
 - **Parte 2 (versão 2.0.0):** chave de API obrigatória por aplicativo, planos com rate limiting, idempotência em requisições `POST` e versionamento de API por header.
 
-**Versão atual:** 2.0.0. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md), e as regras de uso estão nos [Termos de Uso](TERMOS-DE-USO.md).
+**Versão atual:** 2.1.0. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md), e as regras de uso estão nos [Termos de Uso](TERMOS-DE-USO.md).
 
 ## API em produção (Render)
 
@@ -165,6 +165,20 @@ GET /api/v1/planos                      → v1: { "nome", "limitePorMinuto", "pr
 GET /api/v1/planos  X-API-Version: 2    → v2: { "nome", "descricao", "limites": { "porMinuto", "porHora" },
                                                  "preco": { "valor", "moeda", "formatado": "R$ 60,00" } }
 ```
+
+## Front-end de vitrine
+
+A pasta `frontend/` tem uma página em HTML e JavaScript puro que consome a API: mostra os planos em cards, alterna entre as versões 1 e 2 (`X-API-Version`) e exibe as requisições restantes do plano, com contagem regressiva quando o limite é atingido (`429` + `Retry-After`).
+
+Ela usa uma chave do plano FREE criada só para o navegador (Termos de Uso, 3.3), definida na constante `API_KEY` do `index.html`, e aponta para `http://localhost:8080`.
+
+Com a API rodando, sirva a pasta numa porta liberada pelo CORS (3000, 4200 ou 5173) e abra http://localhost:5173:
+
+```bash
+python -m http.server 5173 --directory frontend
+```
+
+> Abrir o `index.html` direto (`file://`) não funciona: o navegador envia `Origin: null`, e o CORS bloqueia.
 
 ## Coleção do Postman
 

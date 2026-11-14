@@ -24,15 +24,16 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-14
+
 ### Added
 
 - Termos de Uso (`TERMOS-DE-USO.md`), com link "Terms of service" no Swagger.
-- Front-end de vitrine (`frontend/index.html`) que consome a API com `fetch` e lista os planos de `GET /api/v1/planos`, usando uma chave de API do plano FREE própria para o navegador.
+- Front-end de vitrine (`frontend/index.html`), em HTML e JavaScript puro, que consome `GET /api/v1/planos` com `fetch` e uma chave de API do plano FREE própria para o navegador. Mostra os planos em cards, alterna entre as versões 1 e 2 da API pelo header `X-API-Version` e exibe as requisições restantes do plano, com contagem regressiva pelo `Retry-After` quando o limite é atingido.
 
 ### Fixed
 
 - CORS passa a expor os headers de rate limit (`Retry-After`, `X-Rate-Limit-Limit`, `X-Rate-Limit-Remaining`) para clientes web.
-
 - Os registros de idempotência com mais de 24 horas passam a ser apagados por uma tarefa agendada, de hora em hora. Antes, um registro vencido só era apagado quando a mesma `X-Idempotency-Key` era reenviada, e a resposta guardada ficava no banco indefinidamente.
 
 ## [2.0.0] - 2026-11-14
@@ -115,7 +116,8 @@ Primeira versão estável da API, entregue como Parte 1 do Projeto Final.
 - Respostas de erro padronizadas em JSON (path, método, status, mensagem e erros por campo).
 - Documentação interativa OpenAPI/Swagger em `/docs-park.html`.
 
-[Unreleased]: https://github.com/fidelisspp/Estacionamento-API/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/fidelisspp/Estacionamento-API/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/fidelisspp/Estacionamento-API/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fidelisspp/Estacionamento-API/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/fidelisspp/Estacionamento-API/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/fidelisspp/Estacionamento-API/releases/tag/v1.0.0
