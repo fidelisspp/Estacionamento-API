@@ -7,7 +7,7 @@ Projeto final da disciplina, desenvolvido com Spring Boot.
 - **Parte 1:** entidades relacionadas, CRUD completo, paginação, consultas personalizadas, documentação OpenAPI e HATEOAS.
 - **Parte 2 (versão 2.0.0):** chave de API obrigatória por aplicativo, planos com rate limiting, idempotência em requisições `POST` e versionamento de API por header.
 
-**Versão atual:** 2.0.0. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md).
+**Versão atual:** 2.0.0. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md), e as regras de uso estão nos [Termos de Uso](TERMOS-DE-USO.md).
 
 ## API em produção (Render)
 

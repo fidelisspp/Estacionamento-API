@@ -38,6 +38,7 @@ public class SpringDocOpenApiConfig {
                                 .title("REST API - Spring Park")
                                 .description("API para gestão de estacionamento de veículos")
                                 .version("v1")
+                                .termsOfService("https://github.com/fidelisspp/Estacionamento-API/blob/main/TERMOS-DE-USO.md")
                                 .license(new License().name("Apache 2.0").url("https://www.apache.org/licenses/LICENSE-2.0"))
                                 .contact(new Contact().name("João Vitor").email("joaovitor@spring-park.com"))
                 );
