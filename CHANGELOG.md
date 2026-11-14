@@ -27,8 +27,11 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 ### Added
 
 - Termos de Uso (`TERMOS-DE-USO.md`), com link "Terms of service" no Swagger.
+- Front-end de vitrine (`frontend/index.html`) que consome a API com `fetch` e lista os planos de `GET /api/v1/planos`, usando uma chave de API do plano FREE própria para o navegador.
 
 ### Fixed
+
+- CORS passa a expor os headers de rate limit (`Retry-After`, `X-Rate-Limit-Limit`, `X-Rate-Limit-Remaining`) para clientes web.
 
 - Os registros de idempotência com mais de 24 horas passam a ser apagados por uma tarefa agendada, de hora em hora. Antes, um registro vencido só era apagado quando a mesma `X-Idempotency-Key` era reenviada, e a resposta guardada ficava no banco indefinidamente.
 

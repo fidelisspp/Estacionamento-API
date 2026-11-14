@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Park — Planos</title>
+    <style>
+        :root {
+            --fundo: #f5f7fa;
+            --cartao: #ffffff;
+            --texto: #1f2933;
+            --suave: #616e7c;
+            --borda: #e4e7eb;
+            --destaque: #2563eb;
+            --erro: #b42318;
+            --aviso: #b54708;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: var(--fundo);
+            color: var(--texto);
+        }
+        main { max-width: 960px; margin: 0 auto; padding: 48px 16px; }
+
+        header { text-align: center; margin-bottom: 32px; }
+        header h1 { margin: 0 0 8px; font-size: 2rem; }
+        header p { margin: 0; color: var(--suave); }
+
+        .barra {
+            display: flex; flex-wrap: wrap; gap: 12px;
+            align-items: center; justify-content: space-between;
+            background: var(--cartao); border: 1px solid var(--borda);
+            border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+        }
+        .versoes { display: flex; gap: 4px; }
+        .versoes button {
+            border: 1px solid var(--borda); background: var(--fundo);
+            padding: 6px 14px; border-radius: 8px; cursor: pointer; font: inherit;
+        }
+        .versoes button[aria-pressed="true"] {
+            background: var(--destaque); border-color: var(--destaque); color: #fff;
+        }
+        #carregar {
+            border: 0; background: var(--destaque); color: #fff;
+            padding: 8px 18px; border-radius: 8px; cursor: pointer; font: inherit;
+        }
+        #carregar:disabled { opacity: .5; cursor: not-allowed; }
+
+        .limite { font-size: .9rem; color: var(--suave); min-width: 220px; }
+        .medidor { height: 6px; background: var(--borda); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+        .medidor span { display: block; height: 100%; width: 0; background: var(--destaque); transition: width .3s; }
+
+        #status { min-height: 1.5em; margin: 0 0 16px; text-align: center; }
+        #status.erro { color: var(--erro); }
+        #status.aviso { color: var(--aviso); }
+
+        .planos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+        .plano {
+            background: var(--cartao); border: 1px solid var(--borda);
+            border-radius: 12px; padding: 24px; display: flex; flex-direction: column;
+        }
+        .plano.popular { border: 2px solid var(--destaque); }
+        .selo {
+            align-self: flex-start; font-size: .75rem; font-weight: 600;
+            background: var(--destaque); color: #fff; padding: 2px 10px; border-radius: 999px; margin-bottom: 8px;
+        }
+        .plano h2 { margin: 0; font-size: 1.25rem; }
+        .plano .descricao { color: var(--suave); margin: 4px 0 16px; min-height: 2.6em; }
+        .preco { font-size: 2rem; font-weight: 700; }
+        .preco small { font-size: .9rem; font-weight: 400; color: var(--suave); }
+        .plano ul { list-style: none; padding: 0; margin: 16px 0 0; }
+        .plano li { padding: 6px 0; border-top: 1px solid var(--borda); }
+
+        footer { text-align: center; color: var(--suave); font-size: .85rem; margin-top: 32px; }
+        footer code { background: var(--borda); padding: 1px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <h1>Spring Park</h1>
+        <p>API de gestão de estacionamento. Escolha o plano ideal para o seu negócio.</p>
+    </header>
+
+    <div class="barra">
+        <div class="versoes" role="group" aria-label="Versão da API">
+            <button type="button" data-versao="1" aria-pressed="true">API v1</button>
+            <button type="button" data-versao="2" aria-pressed="false">API v2</button>
+        </div>
+
+        <div class="limite">
+            <div id="textoLimite">Requisições restantes: —</div>
+            <div class="medidor"><span id="medidor"></span></div>
+        </div>
+
+        <button type="button" id="carregar">Carregar planos</button>
+    </div>
+
+    <p id="status"></p>
+    <section class="planos" id="planos"></section>
+
+    <footer>
+        Dados de <code>GET /api/v1/planos</code> com o header <code id="rodapeVersao">X-API-Version: 1</code>.
+        Valores fictícios (projeto acadêmico).
+    </footer>
+</main>
+
+<script>
+    const API_URL = 'http://localhost:8080/api/v1';
+    // Chave "Site vitrine", plano FREE. Pode ficar visível no navegador: foi criada só
+    // para isso e tem o limite mais baixo (Termos de Uso, 3.3).
+    const API_KEY = 'e155bada-7456-45aa-8d68-2d4184fa1a2d';
+    const PLANO_POPULAR = 'BASIC';
+
+    const botaoCarregar = document.getElementById('carregar');
+    const botoesVersao = document.querySelectorAll('[data-versao]');
+    const status = document.getElementById('status');
+    const listaPlanos = document.getElementById('planos');
+    const textoLimite = document.getElementById('textoLimite');
+    const medidor = document.getElementById('medidor');
+    const rodapeVersao = document.getElementById('rodapeVersao');
+
+    let versao = '1';
+    let contagem = null;
+
+    const reais = valor => Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Os dados vêm da API, então escapamos antes de colocar no HTML
+    const escapar = texto => String(texto).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+    // ---------- Passo 2: versionamento ----------
+    // v1 e v2 têm formatos diferentes. Aqui os dois viram um formato único para a tela.
+    function normalizar(plano) {
+        if (versao === '2') {
+            return {
+                nome: plano.nome,
+                descricao: plano.descricao,
+                preco: plano.preco.formatado,           // a v2 já manda formatado: "R$ 60,00"
+                itens: [
+                    `${plano.limites.porMinuto} requisições por minuto`,
+                    `${plano.limites.porHora.toLocaleString('pt-BR')} requisições por hora`,
+                    `Moeda: ${plano.preco.moeda}`
+                ]
+            };
+        }
+        return {
+            nome: plano.nome,
+            descricao: plano.descricao,
+            preco: reais(plano.precoMensal),            // a v1 manda só o número: 60.00
+            itens: [`${plano.limitePorMinuto} requisições por minuto`]
+        };
+    }
+
+    botoesVersao.forEach(botao => botao.addEventListener('click', () => {
+        versao = botao.dataset.versao;
+        botoesVersao.forEach(b => b.setAttribute('aria-pressed', String(b === botao)));
+        rodapeVersao.textContent = `X-API-Version: ${versao}`;
+        carregarPlanos();
+    }));
+
+    // ---------- Passo 1: rate limit visível ----------
+    function atualizarLimite(resposta) {
+        const limite = resposta.headers.get('X-Rate-Limit-Limit');
+        const restantes = resposta.headers.get('X-Rate-Limit-Remaining');
+        if (limite === null || restantes === null) {
+            return;
+        }
+        textoLimite.textContent = `Requisições restantes: ${restantes} de ${limite} por minuto`;
+        medidor.style.width = `${(Number(restantes) / Number(limite)) * 100}%`;
+    }
+
+    function aguardar(segundos) {
+        clearInterval(contagem);
+        botaoCarregar.disabled = true;
+        botoesVersao.forEach(b => b.disabled = true);
+
+        const mostrar = () => {
+            status.className = 'aviso';
+            status.textContent = `Limite do plano FREE atingido. Tente de novo em ${segundos} s.`;
+        };
+        mostrar();
+
+        contagem = setInterval(() => {
+            segundos--;
+            if (segundos > 0) {
+                mostrar();
+                return;
+            }
+            clearInterval(contagem);
+            botaoCarregar.disabled = false;
+            botoesVersao.forEach(b => b.disabled = false);
+            status.className = '';
+            status.textContent = 'Pode tentar de novo.';
+        }, 1000);
+    }
+
+    // ---------- Passo 3: vitrine ----------
+    function mostrarPlanos(planos) {
+        listaPlanos.innerHTML = planos.map(normalizar).map(plano => {
+            const popular = plano.nome === PLANO_POPULAR;
+            return `
+                <article class="plano${popular ? ' popular' : ''}">
+                    ${popular ? '<span class="selo">Mais popular</span>' : ''}
+                    <h2>${escapar(plano.nome)}</h2>
+                    <p class="descricao">${escapar(plano.descricao)}</p>
+                    <div class="preco">${escapar(plano.preco)} <small>/mês</small></div>
+                    <ul>${plano.itens.map(item => `<li>${escapar(item)}</li>`).join('')}</ul>
+                </article>`;
+        }).join('');
+    }
+
+    // ---------- A requisição ----------
+    async function carregarPlanos() {
+        status.className = '';
+        status.textContent = 'Carregando...';
+
+        try {
+            const resposta = await fetch(`${API_URL}/planos`, {
+                headers: { 'X-API-Key': API_KEY, 'X-API-Version': versao }
+            });
+            atualizarLimite(resposta);
+
+            if (resposta.status === 429) {
+                aguardar(Number(resposta.headers.get('Retry-After')) || 1);
+                return;
+            }
+
+            const corpo = await resposta.json();
+            if (!resposta.ok) {
+                // A API devolve o ErrorMessage padrão: { status, message, ... }
+                throw new Error(`${resposta.status} - ${corpo.message}`);
+            }
+
+            mostrarPlanos(corpo._embedded.planos);
+            status.textContent = `${corpo._embedded.planos.length} planos carregados (API v${versao}).`;
+        } catch (erro) {
+            status.className = 'erro';
+            // TypeError = a requisição nem chegou: API desligada ou bloqueio de CORS
+            status.textContent = erro instanceof TypeError
+                ? 'Não foi possível conectar à API. Ela está rodando em localhost:8080?'
+                : erro.message;
+        }
+    }
+
+    botaoCarregar.addEventListener('click', carregarPlanos);
+    carregarPlanos();
+</script>
+</body>
+</html>
