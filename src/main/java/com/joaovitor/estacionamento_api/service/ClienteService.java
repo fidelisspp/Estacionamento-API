@@ -2,6 +2,7 @@ package com.joaovitor.estacionamento_api.service;
 
 import com.joaovitor.estacionamento_api.entity.Cliente;
 import com.joaovitor.estacionamento_api.exception.ClienteComHistoricoException;
+import com.joaovitor.estacionamento_api.exception.ClienteJaCadastradoException;
 import com.joaovitor.estacionamento_api.exception.CpfUniqueViolationException;
 import com.joaovitor.estacionamento_api.exception.EntityNotFoundException;
 import com.joaovitor.estacionamento_api.repository.ClienteRepository;
@@ -21,6 +22,9 @@ public class ClienteService {
 
     @Transactional
     public Cliente salvar(Cliente cliente) {
+        if (clienteRepository.existsByUsuarioId(cliente.getUsuario().getId())) {
+            throw new ClienteJaCadastradoException("Este usuário já possui cadastro de cliente");
+        }
         try {
             return clienteRepository.save(cliente);
         } catch (DataIntegrityViolationException ex) {

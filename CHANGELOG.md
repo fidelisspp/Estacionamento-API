@@ -24,6 +24,11 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 
 ## [Unreleased]
 
+### Fixed
+
+- `POST /api/v1/clientes` passa a retornar `409 Conflict` com a mensagem "Este usuário já possui cadastro de cliente" quando o usuário logado já tem um cliente vinculado. A verificação é feita antes de salvar; o tratamento de CPF duplicado continua igual.
+- Testes de integração voltam a rodar. Desde a 2.0.0 eles não subiam o contexto: o `application.properties` de teste não tinha a configuração de versionamento nem a chave de API inicial, e as requisições não enviavam `X-API-Key` nem `X-Idempotency-Key`. Uma configuração só de teste (`ApiKeyTestConfig`) passa a enviar esses headers e desliga o rate limit durante a suíte.
+
 ## [2.1.0] - 2026-11-14
 
 ### Added

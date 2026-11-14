@@ -52,7 +52,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler({UsernameUniqueViolationException.class, CpfUniqueViolationException.class, CodigoUnicoVagaException.class,
             NomeUnicoServicoException.class, ServicoEmUsoException.class, VagaEmUsoException.class,
-            ClienteComHistoricoException.class, UsuarioExclusaoInvalidaException.class,
+            ClienteComHistoricoException.class, ClienteJaCadastradoException.class, UsuarioExclusaoInvalidaException.class,
             EstacionamentoEmAbertoException.class, UltimaApiKeyAtivaException.class})
     public ResponseEntity<ErrorMessage> UniqueViolationException(
             RuntimeException ex,

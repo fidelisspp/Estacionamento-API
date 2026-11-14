@@ -60,6 +60,24 @@ public class ClienteIT {
     }
 
     @Test
+    public void criarCliente_ComUsuarioQueJaPossuiCliente_RetornarErrorMessageStatus409() {
+        ErrorMessage responseBody = testClient
+                .post()
+                        .uri("/api/v1/clientes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .headers(JwtAuthentication.getHeaderAuthorization(testClient, "bia@email.com", "123456"))
+                        .body(new ClienteCreateDto("Bianca Souza", "52998224725"))
+                    .exchange()
+                .expectStatus().isEqualTo(409)
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(409);
+        org.assertj.core.api.Assertions.assertThat(responseBody.getMessage()).isEqualTo("Este usuário já possui cadastro de cliente");
+    }
+
+    @Test
     public void criarClienteComDadosInvalidos_RetornarErrorMessageStatus422() {
         ErrorMessage responseBody = testClient
                 .post()
