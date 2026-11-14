@@ -5,7 +5,9 @@ import com.joaovitor.estacionamento_api.apikey.RateLimitFilter;
 import com.joaovitor.estacionamento_api.apikey.RateLimitService;
 import com.joaovitor.estacionamento_api.jwt.JwtAuthenticationEntryPoint;
 import com.joaovitor.estacionamento_api.jwt.JwtAuthorizationFilter;
+import com.joaovitor.estacionamento_api.idempotencia.IdempotenciaFilter;
 import com.joaovitor.estacionamento_api.service.ApiKeyService;
+import com.joaovitor.estacionamento_api.service.IdempotenciaService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,6 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableMethodSecurity
@@ -34,7 +37,8 @@ public class SpringSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, ApiKeyFilter apiKeyFilter,
-                                           RateLimitFilter rateLimitFilter) throws Exception {
+                                           RateLimitFilter rateLimitFilter,
+                                           IdempotenciaFilter idempotenciaFilter) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
@@ -60,6 +64,9 @@ public class SpringSecurityConfig {
                 ).addFilterAfter(
                         rateLimitFilter, ApiKeyFilter.class
 
+                ).addFilterAfter(
+                        idempotenciaFilter, AuthorizationFilter.class
+
                 ).exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
                 .build();
@@ -78,6 +85,11 @@ public class SpringSecurityConfig {
     @Bean
     public RateLimitFilter rateLimitFilter(RateLimitService rateLimitService) {
         return new RateLimitFilter(rateLimitService);
+    }
+
+    @Bean
+    public IdempotenciaFilter idempotenciaFilter(IdempotenciaService idempotenciaService) {
+        return new IdempotenciaFilter(idempotenciaService);
     }
 
     @Bean

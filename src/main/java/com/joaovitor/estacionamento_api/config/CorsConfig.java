@@ -1,6 +1,7 @@
 package com.joaovitor.estacionamento_api.config;
 
 import com.joaovitor.estacionamento_api.apikey.ApiKeyFilter;
+import com.joaovitor.estacionamento_api.idempotencia.IdempotenciaFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,8 +27,11 @@ public class CorsConfig {
                 HttpHeaders.AUTHORIZATION,
                 HttpHeaders.CONTENT_TYPE,
                 HttpHeaders.ACCEPT,
-                ApiKeyFilter.HEADER_API_KEY));
-        config.setExposedHeaders(List.of(HttpHeaders.LOCATION));
+                ApiKeyFilter.HEADER_API_KEY,
+                IdempotenciaFilter.HEADER_IDEMPOTENCIA));
+        config.setExposedHeaders(List.of(
+                HttpHeaders.LOCATION,
+                IdempotenciaFilter.HEADER_REPETIDA));
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

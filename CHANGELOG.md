@@ -29,6 +29,11 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 - Esquema de segurança `apiKey` (header `X-API-Key`) na documentação Swagger, exigido em todas as rotas `/api/**`, e resposta `401` documentada nessas rotas.
 - Rate limiting por chave de API com o algoritmo token bucket (Bucket4j), conforme o plano: FREE 10, BASIC 60 e PRO 150 requisições por minuto. Toda resposta traz `X-Rate-Limit-Limit` e `X-Rate-Limit-Remaining`. Ao exceder o limite, a API responde `429 Too Many Requests` com o header `Retry-After` e o tempo de espera na mensagem.
 - Resposta `429` documentada no Swagger em todas as rotas `/api/**`, com os headers `Retry-After`, `X-Rate-Limit-Limit` e `X-Rate-Limit-Remaining`.
+- Idempotência em todas as requisições `POST` de `/api/**` (exceto o login) pelo header `X-Idempotency-Key` (UUID): o reenvio da mesma chave devolve a resposta original, sem processar de novo, com o header `X-Idempotency-Replayed: true`. Chave reutilizada com outro endpoint, corpo ou usuário responde `422`; requisição com a mesma chave ainda em processamento responde `409`. As chaves valem por 24 horas, e só respostas de sucesso ficam guardadas.
+
+### Changed
+
+- **BREAKING:** requisições `POST` em `/api/**` (exceto `POST /api/v1/auth`) passam a exigir o header `X-Idempotency-Key` com um UUID. Sem ele, a API responde `400`.
 
 ## [1.1.0] - 2026-10-30
 

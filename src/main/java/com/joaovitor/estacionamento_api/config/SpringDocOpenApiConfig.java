@@ -2,6 +2,9 @@ package com.joaovitor.estacionamento_api.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.parameters.HeaderParameter;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.headers.Header;
@@ -79,8 +82,45 @@ public class SpringDocOpenApiConfig {
                             .content(new Content().addMediaType("application/json",
                                     new MediaType().schema(new Schema<>().$ref("#/components/schemas/ErrorMessage")))));
                 });
+                if (!caminho.equals("/api/v1/auth") && item.getPost() != null) {
+                    documentarIdempotencia(item.getPost());
+                }
             });
         };
+    }
+
+    private void documentarIdempotencia(Operation operacao) {
+        operacao.addParametersItem(new HeaderParameter()
+                .name("X-Idempotency-Key")
+                .required(true)
+                .description("UUID único por operação. Reenviar a mesma chave devolve a resposta original, " +
+                        "sem processar de novo. Validade: 24 horas")
+                .schema(new StringSchema().format("uuid").example("9064f977-2733-493c-b60a-106ed1b6f5c8")));
+
+        complementarResposta(operacao, "400", "Header X-Idempotency-Key ausente ou não é um UUID");
+        complementarResposta(operacao, "409", "Requisição com a mesma X-Idempotency-Key ainda em processamento");
+        complementarResposta(operacao, "422", "X-Idempotency-Key já usada com outro endpoint, corpo ou usuário");
+
+        operacao.getResponses().forEach((codigo, resposta) -> {
+            if (codigo.startsWith("2")) {
+                resposta.addHeaderObject("X-Idempotency-Replayed", new Header()
+                        .description("Vem com o valor true quando a resposta foi devolvida do armazenamento de " +
+                                "idempotência, sem processar a requisição de novo")
+                        .schema(new StringSchema()));
+            }
+        });
+    }
+
+    private void complementarResposta(Operation operacao, String codigo, String texto) {
+        ApiResponse existente = operacao.getResponses().get(codigo);
+        if (existente == null) {
+            operacao.getResponses().addApiResponse(codigo, new ApiResponse()
+                    .description(texto)
+                    .content(new Content().addMediaType("application/json",
+                            new MediaType().schema(new Schema<>().$ref("#/components/schemas/ErrorMessage")))));
+        } else {
+            existente.setDescription(existente.getDescription() + " | " + texto);
+        }
     }
 
     private SecurityScheme securityScheme() {
