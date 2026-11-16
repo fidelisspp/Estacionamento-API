@@ -27,7 +27,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping("/api/v1/planos")
 public class PlanoController {
 
-    @Operation(summary = "Listar os planos (versões 1 e 2)", description = "Recurso para listar os planos da API, " +
+    @Operation(summary = "Listar os planos (versão 1)", description = "Recurso para listar os planos da API, " +
             "versionado pelo header X-API-Version. " +
             "Versão 1 (padrão, quando o header não é enviado): limite por minuto (limitePorMinuto), preço mensal " +
             "(precoMensal) e descrição. " +

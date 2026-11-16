@@ -16,12 +16,19 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
 
 @Configuration
 public class SpringDocOpenApiConfig {
+
+    private static final String HEADER_VERSAO = "X-API-Version";
 
     @Bean
     public OpenAPI openAPI() {
@@ -44,12 +51,52 @@ public class SpringDocOpenApiConfig {
                 );
     }
 
+    @Bean
+    public GroupedOpenApi apiV1() {
+        return grupoDaVersao("1");
+    }
+
+    @Bean
+    public GroupedOpenApi apiV2() {
+        return grupoDaVersao("2");
+    }
+
+    private GroupedOpenApi grupoDaVersao(String versao) {
+        return GroupedOpenApi.builder()
+                .group("v" + versao)
+                .displayName("Versão " + versao)
+                .packagesToScan("com.joaovitor.estacionamento_api.web.controller")
+                .addOpenApiMethodFilter(metodo -> {
+                    RequestMapping mapeamento = AnnotatedElementUtils.findMergedAnnotation(metodo, RequestMapping.class);
+                    return mapeamento == null || mapeamento.version().isEmpty() || mapeamento.version().equals(versao);
+                })
+                .addOpenApiCustomizer(openApi -> {
+                    openApi.getInfo().setVersion("v" + versao);
+                    if (openApi.getPaths() == null) {
+                        return;
+                    }
+                    openApi.getPaths().forEach((caminho, item) -> item.readOperations().forEach(operacao -> {
+                        if (!caminho.startsWith("/api/")) {
+                            return;
+                        }
+                        if (operacao.getParameters() != null) {
+                            operacao.getParameters().removeIf(p -> HEADER_VERSAO.equalsIgnoreCase(p.getName()));
+                        }
+                        operacao.addParametersItem(new HeaderParameter()
+                                .name(HEADER_VERSAO)
+                                .description("Versão da API (definida pelo seletor no topo da página)")
+                                .schema(new StringSchema()._default(versao)._enum(List.of(versao))));
+                    }));
+                })
+                .build();
+    }
+
     /**
      * Acrescenta a exigência da API Key em todas as operações de /api/**,
      * espelhando a regra do filtro num lugar só.
      */
     @Bean
-    public OpenApiCustomizer apiKeyEmTodasAsRotas() {
+    public GlobalOpenApiCustomizer apiKeyEmTodasAsRotas() {
         return openApi -> {
             if (openApi.getPaths() == null) {
                 return;

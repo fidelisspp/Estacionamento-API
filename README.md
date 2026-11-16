@@ -75,7 +75,7 @@ A API sobe em `http://localhost:8080`. As tabelas são criadas automaticamente n
 | Recurso | Endereço |
 |---|---|
 | Swagger UI (documentação interativa) | http://localhost:8080/docs-park.html |
-| Especificação OpenAPI (JSON) | http://localhost:8080/docs-park |
+| Especificação OpenAPI (JSON) | http://localhost:8080/docs-park/v1 e http://localhost:8080/docs-park/v2 (uma por versão; no Swagger UI, troque pelo seletor do cabeçalho) |
 
 O console web do H2 fica desativado.
 

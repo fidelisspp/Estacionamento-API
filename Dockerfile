@@ -10,6 +10,7 @@ RUN mvn -q -DskipTests dependency:go-offline
 
 # Copy source and build
 COPY src src
+COPY TERMOS-DE-USO.md .
 RUN mvn -DskipTests clean package
 
 
