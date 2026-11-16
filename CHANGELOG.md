@@ -24,6 +24,16 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 
 ## [Unreleased]
 
+### Added
+
+- Seletor de versão no cabeçalho do Swagger ("Select a definition"), com uma definição para cada versão da API: Versão 1 e Versão 2. A Versão 1 mostra tudo o que pertence à versão 1; a Versão 2 mostra tudo da versão 1 mais o que foi implementado na versão 2 (hoje, o novo formato de `GET /api/v1/planos`). Em cada definição, o header `X-API-Version` já vem preenchido com a versão escolhida.
+- Os Termos de Uso abrem num pop-up no próprio Swagger, pelo link "Terms of service", com o conteúdo de `TERMOS-DE-USO.md` formatado (tabelas, listas e links). O arquivo passa a ser incluído no build e na imagem Docker.
+
+### Changed
+
+- A especificação OpenAPI (JSON) passa a ser servida por versão, em `/docs-park/v1` e `/docs-park/v2`, no lugar de `/docs-park`. O Swagger UI continua em `/docs-park.html`.
+- No Swagger, `GET /api/v1/planos` aparece separado por versão, cada uma com o seu formato de resposta, em vez de uma operação só com as duas versões misturadas.
+
 ### Fixed
 
 - `POST /api/v1/clientes` passa a retornar `409 Conflict` com a mensagem "Este usuário já possui cadastro de cliente" quando o usuário logado já tem um cliente vinculado. A verificação é feita antes de salvar; o tratamento de CPF duplicado continua igual.
