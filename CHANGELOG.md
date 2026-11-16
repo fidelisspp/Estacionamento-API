@@ -24,6 +24,8 @@ Os números de versão seguem o padrão **MAIOR.MENOR.CORREÇÃO**:
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-16
+
 ### Added
 
 - Seletor de versão no cabeçalho do Swagger ("Select a definition"), com uma definição para cada versão da API: Versão 1 e Versão 2. A Versão 1 mostra tudo o que pertence à versão 1; a Versão 2 mostra tudo da versão 1 mais o que foi implementado na versão 2 (hoje, o novo formato de `GET /api/v1/planos`). Em cada definição, o header `X-API-Version` já vem preenchido com a versão escolhida.
@@ -131,7 +133,8 @@ Primeira versão estável da API, entregue como Parte 1 do Projeto Final.
 - Respostas de erro padronizadas em JSON (path, método, status, mensagem e erros por campo).
 - Documentação interativa OpenAPI/Swagger em `/docs-park.html`.
 
-[Unreleased]: https://github.com/fidelisspp/Estacionamento-API/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/fidelisspp/Estacionamento-API/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/fidelisspp/Estacionamento-API/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/fidelisspp/Estacionamento-API/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/fidelisspp/Estacionamento-API/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/fidelisspp/Estacionamento-API/compare/v1.0.0...v1.1.0
